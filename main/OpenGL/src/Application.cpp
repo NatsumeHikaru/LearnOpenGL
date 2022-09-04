@@ -17,6 +17,9 @@
 #include"glm/glm.hpp"
 #include"glm/gtc/matrix_transform.hpp"
 
+#include"imgui/imgui.h"
+#include"imgui/imgui_impl_glfw_gl3.h"
+
 int main() {
 	if (!glfwInit()) return -1;
 
@@ -24,7 +27,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(680, 480, "Hello World", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(960, 540, "Hello World", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -36,10 +39,10 @@ int main() {
 	if (glewInit() != GLEW_OK) std::cout << "Error!" << std::endl;
 
 	float positions[] = {
-		-0.5f, -0.5f, 0.0f, 0.0f, // 0
-		 0.5f, -0.5f, 1.0f, 0.0f, // 1
-		 0.5f,  0.5f, 1.0f, 1.0f, // 2
-	    -0.5f,  0.5f, 0.0f, 1.0f, // 3
+		100.0f, 100.0f, 0.0f, 0.0f, // 0
+		 200.0f, 100.0f, 1.0f, 0.0f, // 1
+		 200.0f,  200.0f, 1.0f, 1.0f, // 2
+	    100.0f,  200.0f, 0.0f, 1.0f, // 3
 	};
 
 	unsigned int indices[] = {
@@ -65,11 +68,12 @@ int main() {
 
 	IndexBuffer* ib = new IndexBuffer(indices, 6);
 
-	glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+	glm::mat4 proj = glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
+	glm::mat4 view = glm::translate(glm::mat4(1.0), glm::vec3(-100, 0, 0));
 
 	Shader* shader = new Shader("res/shader/basic.shader");
 	shader->Bind();
-	shader->SetUniformMat4f("u_MVP", proj);
+
 
 	Texture* texture = new Texture("res/textures/kazuha.jpg");
 	texture->Bind();
@@ -82,19 +86,44 @@ int main() {
 
 	Renderer* renderer = new Renderer();
 
+	ImGui::CreateContext();
+	ImGui_ImplGlfwGL3_Init(window, true);
+	ImGui::StyleColorsDark();
+
+	glm::vec3 translation(200, 200, 0);
+
 	float r = 0.0f;
 	float delta = 0.05f;
 	while (!glfwWindowShouldClose(window)) {
 		renderer->Clear();
 
+		ImGui_ImplGlfwGL3_NewFrame();
+
+		glm::mat4 model = glm::translate(glm::mat4(1.0), translation);
+		glm::mat4 mvp = proj * view * model;
+
+		shader->Bind();
+		shader->SetUniformMat4f("u_MVP", mvp);
+
 		renderer->Draw(*va, *ib, *shader);
+
+		// demo
+		{
+			ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 960.0f);           
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		}
+
+		ImGui::Render();
+		ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	delete va, vb, ib, shader;
+	delete va, vb, ib, shader, texture;
 
+	ImGui_ImplGlfwGL3_Shutdown();
+	ImGui::DestroyContext();
 	glfwTerminate();
 	return 0;
 }
