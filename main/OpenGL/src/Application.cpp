@@ -21,6 +21,7 @@
 #include"imgui/imgui_impl_glfw_gl3.h"
 
 #include"tests/TestClearColor.h"
+#include"tests\TestTexture2D.h"
 
 int main() {
 	if (!glfwInit()) return -1;
@@ -54,6 +55,7 @@ int main() {
 	currentTest = menu;
 
 	menu->RegisterTest<test::TestClearColor>("clear color");
+	menu->RegisterTest<test::TestTexture2D>("Texture 2D");
 
 	while (!glfwWindowShouldClose(window)) {
 		GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
